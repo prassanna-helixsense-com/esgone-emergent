@@ -153,6 +153,18 @@ async def initialize_sample_data():
     if await db.assets.count_documents({}) > 0:
         return
     
+    # Create admin user
+    admin_user = {
+        "_id": str(uuid.uuid4()),
+        "email": "admin@esgone.ai",
+        "name": "ESGone Administrator",
+        "company": "ESGone Platform",
+        "password_hash": hash_password("Welcome#1"),
+        "role": "admin",
+        "created_at": datetime.utcnow()
+    }
+    await db.users.insert_one(admin_user)
+    
     # Sample assets
     sample_assets = [
         {
