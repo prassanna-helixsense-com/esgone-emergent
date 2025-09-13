@@ -1,182 +1,223 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
 import { Card, CardHeader, CardContent, CardTitle } from './ui/card';
-import { BarChart3, Users, ShieldCheck, TrendingUp, Leaf, Zap, Droplets, Recycle } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { DollarSign, Wrench, RefreshCw, Building2, Leaf, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  // Mock data based on the real ESGone portal
+  const portfolioData = {
+    totalRepairCost: { value: 330800, items: 19, color: 'green' },
+    totalRetrofitCost: { value: 396960, description: 'Estimated retrofit investment', color: 'purple' },
+    totalReplaceCost: { value: 1501000, percentage: '354% more than repair', color: 'yellow' },
+    totalRAV: { value: 704092, description: 'Replacement Asset Value', color: 'blue' },
+    manufacturingAvoided: { value: 750500, unit: 'kg', description: 'By repairing instead of replacing', color: 'green' },
+    endOfLifeCO2: { value: 86550, unit: 'kg', description: 'When equipment is scrapped', color: 'orange' }
   };
 
-  const mockData = {
-    carbonEmissions: '12,450 tCO2e',
-    energyConsumption: '2.4 GWh',
-    waterUsage: '185,000 L',
-    wasteReduction: '23%',
-    esgScore: '78/100',
-    compliance: '94%'
+  const co2Analysis = {
+    operationalSavings: { value: 64260, unit: 'kg/year', description: 'From replacing with efficient equipment' },
+    manufacturingAvoided: { value: 750500, unit: 'kg', description: 'By repairing instead of replacing' },
+    scrappingImpact: { value: 86550, unit: 'kg', description: 'When equipment reaches end of life' },
+    netBenefit: { value: 663950, unit: 'kg', description: 'Manufacturing avoided minus scrapping' }
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatNumber = (value) => {
+    return new Intl.NumberFormat('en-US').format(value);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="space-y-6">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">ESG</span>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Portfolio Summary</h1>
+          <p className="text-gray-600">Equipment repair, retrofit, and replacement strategies with CO2 impact analysis</p>
+        </div>
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          ESG Optimized
+        </Badge>
+      </div>
+
+      {/* Portfolio Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Total Repair Cost */}
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-green-600">
+                {formatCurrency(portfolioData.totalRepairCost.value)}
+              </CardTitle>
+              <p className="text-sm text-gray-600">Across {portfolioData.totalRepairCost.items} items</p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">ESGone Platform</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Welcome, {user?.name || 'User'}</span>
-            <Button onClick={handleLogout} variant="outline">
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">ESG Dashboard</h2>
-          <p className="text-gray-600">Monitor your environmental, social, and governance performance</p>
-        </div>
-
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-800">Carbon Emissions</CardTitle>
-              <Leaf className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-900">{mockData.carbonEmissions}</div>
-              <p className="text-xs text-green-600">-5.2% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-800">Energy Consumption</CardTitle>
-              <Zap className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-900">{mockData.energyConsumption}</div>
-              <p className="text-xs text-blue-600">+2.1% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-cyan-800">Water Usage</CardTitle>
-              <Droplets className="h-4 w-4 text-cyan-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-cyan-900">{mockData.waterUsage}</div>
-              <p className="text-xs text-cyan-600">-8.3% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-800">Waste Reduction</CardTitle>
-              <Recycle className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-900">{mockData.wasteReduction}</div>
-              <p className="text-xs text-purple-600">Target: 30% reduction</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-orange-800">ESG Score</CardTitle>
-              <TrendingUp className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-900">{mockData.esgScore}</div>
-              <p className="text-xs text-orange-600">Industry average: 65</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-teal-50 to-teal-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-teal-800">Compliance Rate</CardTitle>
-              <ShieldCheck className="h-4 w-4 text-teal-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-teal-900">{mockData.compliance}</div>
-              <p className="text-xs text-teal-600">All standards met</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Button className="h-24 bg-white border-2 border-gray-200 hover:border-teal-500 text-gray-700 hover:text-teal-600 flex-col space-y-2">
-            <BarChart3 className="h-6 w-6" />
-            <span>Generate Report</span>
-          </Button>
-          
-          <Button className="h-24 bg-white border-2 border-gray-200 hover:border-teal-500 text-gray-700 hover:text-teal-600 flex-col space-y-2">
-            <Users className="h-6 w-6" />
-            <span>Team Management</span>
-          </Button>
-          
-          <Button className="h-24 bg-white border-2 border-gray-200 hover:border-teal-500 text-gray-700 hover:text-teal-600 flex-col space-y-2">
-            <ShieldCheck className="h-6 w-6" />
-            <span>Compliance Check</span>
-          </Button>
-          
-          <Button className="h-24 bg-white border-2 border-gray-200 hover:border-teal-500 text-gray-700 hover:text-teal-600 flex-col space-y-2">
-            <TrendingUp className="h-6 w-6" />
-            <span>Analytics</span>
-          </Button>
-        </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <Wrench className="h-6 w-6 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Carbon emissions report generated</p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Energy audit completed</p>
-                  <p className="text-xs text-gray-500">1 day ago</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Compliance review scheduled</p>
-                  <p className="text-xs text-gray-500">3 days ago</p>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm font-medium text-gray-900">Total Repair Cost</p>
           </CardContent>
         </Card>
-      </main>
+
+        {/* Total Retrofit Cost */}
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-purple-600">
+                {formatCurrency(portfolioData.totalRetrofitCost.value)}
+              </CardTitle>
+              <p className="text-sm text-gray-600">{portfolioData.totalRetrofitCost.description}</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <RefreshCw className="h-6 w-6 text-purple-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium text-gray-900">Total Retrofit Cost</p>
+          </CardContent>
+        </Card>
+
+        {/* Total Replace Cost */}
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-yellow-600">
+                {formatCurrency(portfolioData.totalReplaceCost.value)}
+              </CardTitle>
+              <p className="text-sm text-gray-600">{portfolioData.totalReplaceCost.percentage}</p>
+            </div>
+            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+              <DollarSign className="h-6 w-6 text-yellow-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium text-gray-900">Total Replace Cost</p>
+          </CardContent>
+        </Card>
+
+        {/* Total RAV (CMMS) */}
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-blue-600">
+                {formatCurrency(portfolioData.totalRAV.value)}
+              </CardTitle>
+              <p className="text-sm text-gray-600">{portfolioData.totalRAV.description}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Building2 className="h-6 w-6 text-blue-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium text-gray-900">Total RAV (CMMS)</p>
+          </CardContent>
+        </Card>
+
+        {/* Manufacturing CO2 Avoided */}
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-green-600">
+                {formatNumber(portfolioData.manufacturingAvoided.value)} {portfolioData.manufacturingAvoided.unit}
+              </CardTitle>
+              <p className="text-sm text-gray-600">{portfolioData.manufacturingAvoided.description}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <Leaf className="h-6 w-6 text-green-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium text-gray-900">Manufacturing CO2 Avoided</p>
+          </CardContent>
+        </Card>
+
+        {/* End-of-Life CO2 */}
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-orange-600">
+                {formatNumber(portfolioData.endOfLifeCO2.value)} {portfolioData.endOfLifeCO2.unit}
+              </CardTitle>
+              <p className="text-sm text-gray-600">{portfolioData.endOfLifeCO2.description}</p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <Trash2 className="h-6 w-6 text-orange-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium text-gray-900">End-of-Life CO2</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Complete CO2 Impact Analysis */}
+      <Card className="bg-green-50 border-green-200">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Leaf className="h-5 w-5 text-green-600" />
+            <CardTitle className="text-xl text-green-800">Complete CO2 Impact Analysis</CardTitle>
+          </div>
+          <p className="text-green-700">Environmental benefits of repair vs. replacement strategies</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Operational CO2 Savings */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {formatNumber(co2Analysis.operationalSavings.value)} {co2Analysis.operationalSavings.unit}
+              </div>
+              <h4 className="font-medium text-gray-900 mb-1">Operational CO2 Savings</h4>
+              <p className="text-xs text-gray-600">{co2Analysis.operationalSavings.description}</p>
+            </div>
+
+            {/* Manufacturing Avoided */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600 mb-1">
+                {formatNumber(co2Analysis.manufacturingAvoided.value)} {co2Analysis.manufacturingAvoided.unit}
+              </div>
+              <h4 className="font-medium text-gray-900 mb-1">Manufacturing Avoided</h4>
+              <p className="text-xs text-gray-600">{co2Analysis.manufacturingAvoided.description}</p>
+            </div>
+
+            {/* Scrapping Impact */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600 mb-1">
+                {formatNumber(co2Analysis.scrappingImpact.value)} {co2Analysis.scrappingImpact.unit}
+              </div>
+              <h4 className="font-medium text-gray-900 mb-1">Scrapping Impact</h4>
+              <p className="text-xs text-gray-600">{co2Analysis.scrappingImpact.description}</p>
+            </div>
+
+            {/* Net Environmental Benefit */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {formatNumber(co2Analysis.netBenefit.value)} {co2Analysis.netBenefit.unit}
+              </div>
+              <h4 className="font-medium text-gray-900 mb-1">Net Environmental Benefit</h4>
+              <p className="text-xs text-gray-600">{co2Analysis.netBenefit.description}</p>
+            </div>
+          </div>
+
+          {/* Summary Banner */}
+          <div className="bg-blue-600 text-white p-6 rounded-lg text-center">
+            <div className="text-4xl font-bold mb-2">
+              {formatNumber(co2Analysis.netBenefit.value)} kg CO2 saved
+            </div>
+            <p className="text-blue-100">Net Environmental Benefit (Repair Strategy)</p>
+            <p className="text-sm text-blue-200 mt-2">
+              Manufacturing avoided minus scrapping impact
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
