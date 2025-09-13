@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: esgone_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: esgone_admin
+      MONGO_INITDB_ROOT_PASSWORD: esgone_password_2024
+      MONGO_INITDB_DATABASE: esgone_platform
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - esgone_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: esgone_backend
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=mongodb://esgone_admin:esgone_password_2024@mongodb:27017/esgone_platform?authSource=admin
+      - DB_NAME=esgone_platform
+      - JWT_SECRET=your-super-secret-jwt-key-for-production-change-this
+      - ENVIRONMENT=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - esgone_network
+    volumes:
+      - ./backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: esgone_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8001
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - esgone_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # MongoDB Admin Interface (Optional)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: esgone_mongo_express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: esgone_admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: esgone_password_2024
+      ME_CONFIG_MONGODB_URL: mongodb://esgone_admin:esgone_password_2024@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - esgone_network
+
+networks:
+  esgone_network:
+    driver: bridge
+    name: esgone_network
+
+volumes:
+  mongodb_data:
+    name: esgone_mongodb_data
