@@ -18,6 +18,7 @@ function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
+          <Toaster />
         </BrowserRouter>
       </AuthProvider>
     </div>
