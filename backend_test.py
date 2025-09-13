@@ -109,12 +109,12 @@ class ESGoneAPITester:
         try:
             temp_session = requests.Session()  # No auth headers
             response = temp_session.get(f"{API_BASE_URL}/dashboard/summary")
-            if response.status_code == 401:
+            if response.status_code in [401, 403]:  # Both are valid for unauthorized access
                 self.log_test('authentication', 'Protected Route Security', True, 
-                            "Correctly rejected unauthenticated request")
+                            f"Correctly rejected unauthenticated request (HTTP {response.status_code})")
             else:
                 self.log_test('authentication', 'Protected Route Security', False, 
-                            f"Should return 401, got {response.status_code}")
+                            f"Should return 401 or 403, got {response.status_code}")
         except Exception as e:
             self.log_test('authentication', 'Protected Route Security', False, f"Exception: {str(e)}")
     
