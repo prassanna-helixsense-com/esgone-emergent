@@ -1,24 +1,79 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
 import { DollarSign, Wrench, RefreshCw, Building2, Leaf, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
 const Dashboard = () => {
-  // Mock data based on the real ESGone portal
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get(`${API}/dashboard/summary`);
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive"
+      });
+      
+      // Fallback to mock data if API fails
+      setDashboardData({
+        total_repair_cost: 330800,
+        total_replacement_cost: 1501000,
+        total_co2_avoided: 750500,
+        assets_count: 19,
+        operational_assets: 12,
+        maintenance_assets: 4,
+        critical_assets: 3
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-300 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate derived metrics from API data
   const portfolioData = {
-    totalRepairCost: { value: 330800, items: 19, color: 'green' },
-    totalRetrofitCost: { value: 396960, description: 'Estimated retrofit investment', color: 'purple' },
-    totalReplaceCost: { value: 1501000, percentage: '354% more than repair', color: 'yellow' },
-    totalRAV: { value: 704092, description: 'Replacement Asset Value', color: 'blue' },
-    manufacturingAvoided: { value: 750500, unit: 'kg', description: 'By repairing instead of replacing', color: 'green' },
-    endOfLifeCO2: { value: 86550, unit: 'kg', description: 'When equipment is scrapped', color: 'orange' }
+    totalRepairCost: { value: dashboardData.total_repair_cost, items: dashboardData.assets_count, color: 'green' },
+    totalRetrofitCost: { value: dashboardData.total_repair_cost * 1.2, description: 'Estimated retrofit investment', color: 'purple' },
+    totalReplaceCost: { value: dashboardData.total_replacement_cost, percentage: `${Math.round(((dashboardData.total_replacement_cost / dashboardData.total_repair_cost) - 1) * 100)}% more than repair`, color: 'yellow' },
+    totalRAV: { value: dashboardData.total_replacement_cost * 0.47, description: 'Replacement Asset Value', color: 'blue' },
+    manufacturingAvoided: { value: dashboardData.total_co2_avoided, unit: 'kg', description: 'By repairing instead of replacing', color: 'green' },
+    endOfLifeCO2: { value: Math.round(dashboardData.total_co2_avoided * 0.115), unit: 'kg', description: 'When equipment is scrapped', color: 'orange' }
   };
 
   const co2Analysis = {
     operationalSavings: { value: 64260, unit: 'kg/year', description: 'From replacing with efficient equipment' },
-    manufacturingAvoided: { value: 750500, unit: 'kg', description: 'By repairing instead of replacing' },
-    scrappingImpact: { value: 86550, unit: 'kg', description: 'When equipment reaches end of life' },
-    netBenefit: { value: 663950, unit: 'kg', description: 'Manufacturing avoided minus scrapping' }
+    manufacturingAvoided: { value: dashboardData.total_co2_avoided, unit: 'kg', description: 'By repairing instead of replacing' },
+    scrappingImpact: { value: Math.round(dashboardData.total_co2_avoided * 0.115), unit: 'kg', description: 'When equipment reaches end of life' },
+    netBenefit: { value: Math.round(dashboardData.total_co2_avoided * 0.885), unit: 'kg', description: 'Manufacturing avoided minus scrapping' }
   };
 
   const formatCurrency = (value) => {
@@ -45,6 +100,28 @@ const Dashboard = () => {
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
           ESG Optimized
         </Badge>
+      </div>
+
+      {/* Asset Status Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{dashboardData.operational_assets}</div>
+            <div className="text-sm text-green-700">Operational Assets</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-yellow-600">{dashboardData.maintenance_assets}</div>
+            <div className="text-sm text-yellow-700">Under Maintenance</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-red-600">{dashboardData.critical_assets}</div>
+            <div className="text-sm text-red-700">Critical Status</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Portfolio Metrics Grid */}
