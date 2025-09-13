@@ -1,0 +1,101 @@
+version: '3.8'
+
+# Development Docker Compose with live reload and development features
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: esgone_mongodb_dev
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: esgone_admin
+      MONGO_INITDB_ROOT_PASSWORD: esgone_password_2024
+      MONGO_INITDB_DATABASE: esgone_platform
+    volumes:
+      - mongodb_data_dev:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - esgone_network_dev
+
+  # FastAPI Backend (Development with live reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: esgone_backend_dev
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=mongodb://esgone_admin:esgone_password_2024@mongodb:27017/esgone_platform?authSource=admin
+      - DB_NAME=esgone_platform
+      - JWT_SECRET=dev-jwt-secret-key
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app
+    depends_on:
+      - mongodb
+    networks:
+      - esgone_network_dev
+    volumes:
+      - ./backend:/app
+      - backend_cache:/app/__pycache__
+    command: ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+
+  # React Frontend (Development with live reload)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: esgone_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8001
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
+    depends_on:
+      - backend
+    networks:
+      - esgone_network_dev
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    stdin_open: true
+    tty: true
+
+  # MongoDB Admin Interface
+  mongo-express:
+    image: mongo-express:latest
+    container_name: esgone_mongo_express_dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: esgone_admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: esgone_password_2024
+      ME_CONFIG_MONGODB_URL: mongodb://esgone_admin:esgone_password_2024@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      - mongodb
+    networks:
+      - esgone_network_dev
+
+networks:
+  esgone_network_dev:
+    driver: bridge
+    name: esgone_network_dev
+
+volumes:
+  mongodb_data_dev:
+    name: esgone_mongodb_data_dev
+  backend_cache:
+    name: esgone_backend_cache
+  frontend_node_modules:
+    name: esgone_frontend_node_modules
